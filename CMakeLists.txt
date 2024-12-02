@@ -21,6 +21,25 @@ else()
     set(PYTHON_FLAG 0)
 endif()
 
+if(APPLE)
+if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+    set(OpenMP_C "${CMAKE_C_COMPILER}" CACHE STRING "" FORCE)
+    set(OpenMP_C_FLAGS "-fopenmp=libomp -Wno-unused-command-line-argument" CACHE STRING "" FORCE)
+    set(OpenMP_C_LIB_NAMES "libomp" "libgomp" "libiomp5" CACHE STRING "" FORCE)
+    set(OpenMP_libomp_LIBRARY ${OpenMP_C_LIB_NAMES} CACHE STRING "" FORCE)
+    set(OpenMP_libgomp_LIBRARY ${OpenMP_C_LIB_NAMES} CACHE STRING "" FORCE)
+    set(OpenMP_libiomp5_LIBRARY ${OpenMP_C_LIB_NAMES} CACHE STRING "" FORCE)
+endif()
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(OpenMP_CXX "${CMAKE_CXX_COMPILER}" CACHE STRING "" FORCE)
+  set(OpenMP_CXX_FLAGS "-fopenmp=libomp -Wno-unused-command-line-argument" CACHE STRING "" FORCE)
+  set(OpenMP_CXX_LIB_NAMES "libomp" "libgomp" "libiomp5" CACHE STRING "" FORCE)
+  set(OpenMP_libomp_LIBRARY ${OpenMP_CXX_LIB_NAMES} CACHE STRING "" FORCE)
+  set(OpenMP_libgomp_LIBRARY ${OpenMP_CXX_LIB_NAMES} CACHE STRING "" FORCE)
+  set(OpenMP_libiomp5_LIBRARY ${OpenMP_CXX_LIB_NAMES} CACHE STRING "" FORCE)
+endif()
+endif()
+
 
 # Print the value of PYTHON
 message(STATUS "PYTHON: ${PYTHON}")
@@ -41,13 +60,14 @@ find_package( Boost 1.49.0 REQUIRED COMPONENTS program_options system filesystem
 
 include_directories( ${Boost_INCLUDE_DIRS} )
 
-find_package(OpenMP REQUIRED)
+find_package(OpenMP COMPONENTS C REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Python 3.8 COMPONENTS Interpreter Development REQUIRED)
 
 IF (MAP_OPT)
-    add_subdirectory(pybind11)
+    # add_subdirectory(pybind11)
+    find_package(pybind11 REQUIRED)
 ENDIF()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wconversion")

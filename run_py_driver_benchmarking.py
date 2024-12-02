@@ -1,6 +1,7 @@
 import sys
 import os
-sys.path.append(os.path.abspath("build/python"))
+# sys.path.append(os.path.abspath("build/python"))
+sys.path.append(os.path.abspath("build"))
 sys.path.append('scripts')
 from map import Map
 import json
@@ -12,7 +13,7 @@ with_wait_costs=True
 map=Map(map_path)
 map.print_graph(map.graph)
 
-map_json_path = "../maps/warehouse/human/kiva_large_w_mode.json"
+map_json_path = "../maps/warehouse/human/kiva_large_w_mode_no_end.json"
 with open(map_json_path, "r") as f:
     map_json = json.load(f)
     map_json_str = json.dumps(map_json)
@@ -25,7 +26,7 @@ import py_driver # type: ignore # ignore pylance warning
 print(py_driver.playground())
 
 import json
-config_path="configs/rhcr_pbs_no_rot.json"# "configs/pibt_default_no_rot.json"
+config_path="configs/pibt_default_no_rot.json"
 with open(config_path) as f:
     config=json.load(f)
     config_str=json.dumps(config)
@@ -33,13 +34,13 @@ with open(config_path) as f:
 ret=py_driver.run(
     # For map, it uses map_path by default. If not provided, it'll use map_json
     # which contains json string of the map
-    # map_path=map_path,
+    map_path="/Users/ruth/WPPL_outer/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/maps/warehouse_large.map",
     # map_json_str = map_json_str,
-    map_json_path = map_json_path,
-    simulation_steps=1000,
+    # map_json_path = map_json_path,
+    simulation_steps=500,
     # for the problem instance we use:
     # if random then we need specify the number of agents and total tasks, also random seed,
-    gen_random=True,
+    gen_random=False,
     num_agents=500,
     num_tasks=100000,
     seed=0,
@@ -48,8 +49,8 @@ ret=py_driver.run(
     left_w_weight=1,
     right_w_weight=1,
     # else we need specify agents and tasks path to load data.
-    # agents_path="example_problems/random.domain/agents/random_600.agents",
-    # tasks_path="example_problems/random.domain/tasks/random-32-32-20-600.tasks",
+    agents_path="/Users/ruth/WPPL_outer/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/warehouse_large_400.agents",
+    tasks_path="/Users/ruth/WPPL_outer/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/tasks/warehouse_large.tasks",
     # weights are the edge weights, wait_costs are the vertex wait costs
     # if not specified here, then the program will use the one specified in the config file.
     # weights=compressed_weights_json_str,
@@ -60,7 +61,7 @@ ret=py_driver.run(
     plan_time_limit=1, # in seconds, time limit for planning at each step, no need to change
     preprocess_time_limit=1800, # in seconds, time limit for preprocessing, no need to change
     file_storage_path="large_files/", # where to store the precomputed large files, no need to change
-    task_assignment_strategy="roundrobin", # how to assign tasks to agents, no need to change
+    task_assignment_strategy="greedy", # how to assign tasks to agents, no need to change
     num_tasks_reveal=1, # how many new tasks are revealed, no need to change
 )
 
