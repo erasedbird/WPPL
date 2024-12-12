@@ -4,6 +4,8 @@ project(lifelong_comp)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 
 set(MAP_OPT ON)
 
@@ -40,13 +42,18 @@ ADD_DEFINITIONS(-DBOOST_LOG_DYN_LINK)
 find_package( Boost 1.49.0 REQUIRED COMPONENTS program_options system filesystem log log_setup iostreams)
 
 include_directories( ${Boost_INCLUDE_DIRS} )
+# target_link_libraries(lifelong_comp ${Boost_LIBRARIES})
 
 find_package(OpenMP REQUIRED)
-find_package(spdlog REQUIRED)
+# find_package(spdlog REQUIRED)
+add_subdirectory(spdlog)
+# target_link_libraries(my_program PRIVATE spdlog::spdlog)
 find_package(Threads REQUIRED)
 find_package(Python 3.8 COMPONENTS Interpreter Development REQUIRED)
 
 IF (MAP_OPT)
+    # set(PYBIND11_PATH /mnt/home/ruthluvu/pybind11)
+    # add_subdirectory(${PYBIND11_PATH})
     add_subdirectory(pybind11)
 ENDIF()
 
@@ -96,7 +103,7 @@ ELSE()
 ENDIF()
 
 file(GLOB OFFICIAL_SOURCES "src/**.cpp")
-file(GLOB_RECURSE MY_SOURCES "src/LaCAM2/**.cpp" "src/LNS/**.cpp" "src/util/**.cpp")
+file(GLOB_RECURSE MY_SOURCES "src/LaCAM2/**.cpp" "src/LNS/**.cpp" "src/RHCR/**.cpp" "src/util/**.cpp")
 list(FILTER OFFICIAL_SOURCES EXCLUDE REGEX ".*analyze_results\.cpp")
 list(FILTER OFFICIAL_SOURCES EXCLUDE REGEX ".*py_driver\.cpp")
 set(SOURCES ${OFFICIAL_SOURCES} ${MY_SOURCES})

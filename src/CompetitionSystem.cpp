@@ -242,7 +242,7 @@ void BaseSystem::simulate(int simulation_time)
             auto diff = end-start;
             planner_times.push_back(std::chrono::duration<double>(diff).count());
         }
-        // cout << new_finished_tasks.size() << " tasks has been finished in this timestep" << std::endl;
+        std::cout << new_finished_tasks.size() << " tasks has been finished in this timestep" << std::endl;
 
         // update tasks
         for (auto task : new_finished_tasks)
@@ -853,7 +853,7 @@ void TaskAssignSystem::update_tasks()
 {
     for (int k = 0; k < num_of_agents; k++)
     {
-        while (assigned_tasks[k].size() < num_tasks_reveal && !task_queue.empty())
+        /* while (assigned_tasks[k].size() < num_tasks_reveal && !task_queue.empty())
         {
             std::cout << "assigned task " << task_queue.front().task_id <<
                 " with loc " << task_queue.front().location << " to agent " << k << std::endl;
@@ -865,6 +865,61 @@ void TaskAssignSystem::update_tasks()
             events[k].push_back(make_tuple(task.task_id,timestep,"assigned"));
             all_tasks.push_back(task);
             log_event_assigned(k, task.task_id, timestep);
+        }*/
+
+        if (assigned_tasks[k].size() <= 1)
+        {
+            int closest_dist = 10000000;
+            int closest_index = 0;
+
+            for (size_t i = 0; i < 400; i += 2)
+            {
+                int loc1 = prev_task_locs[k];
+                int loc2 = task_queue[i].location;
+                int cols = 57;
+                int real_dist = abs(loc1 / cols - loc2 / cols) + abs(loc1 % cols - loc2 % cols);
+
+                if (real_dist < closest_dist)
+                {
+                    closest_dist = real_dist;
+                    closest_index = i;
+                }
+            }
+
+            // std::cout << "previous loc is " << prev_task_locs[k] << "\n";
+
+            // std::cout << "closest task is " << closest_index << "\n";
+
+            // std::cout << "Taskqueue length is " << task_queue.size() << "\n";
+
+            // closest_index = 0;
+
+            Task task_start = task_queue[closest_index];
+            // std::cout << "assigned task start " << task_start.task_id << " with loc " << task_start.location << " to agent " << k << std::endl;
+            Task task_end = task_queue[closest_index + 1];
+            // std::cout << "assigned task end " << task_end.task_id << " with loc " << task_end.location << " to agent " << k << std::endl;
+            // task_queue.pop_front();
+            // task_queue.pop_front();
+
+            task_queue.erase(task_queue.begin() + closest_index, task_queue.begin() + closest_index + 2);
+
+            task_start.t_assigned = timestep;
+            task_start.agent_assigned = k;
+
+            task_end.t_assigned = timestep;
+            task_end.agent_assigned = k;
+
+            assigned_tasks[k].push_back(task_start);
+            assigned_tasks[k].push_back(task_end);
+
+            prev_task_locs[k] = task_end.location;
+
+            events[k].push_back(make_tuple(task_start.task_id, timestep, "assigned"));
+            events[k].push_back(make_tuple(task_end.task_id, timestep, "assigned"));
+            all_tasks.push_back(task_start);
+            all_tasks.push_back(task_end);
+            log_event_assigned(k, task_start.task_id, timestep);
+            log_event_assigned(k, task_end.task_id, timestep);
         }
     }
 }
@@ -884,6 +939,42 @@ void InfAssignSystem::update_tasks(){
             all_tasks.push_back(task);
             task_id++;
             task_counter[k]++;
+        }
+    }
+}
+
+void KivaSystem::update_tasks(){
+    for (int k = 0; k < num_of_agents; k++)
+    {
+        while (assigned_tasks[k].size() < num_tasks_reveal) 
+        {
+            int prev_task_loc=prev_task_locs[k];
+
+            int loc;
+            if (map.grid_types[prev_task_loc]=='.' || map.grid_types[prev_task_loc]=='e') 
+            {
+                // next task would be w
+                // Sample a workstation based on given distribution
+                int idx = this->agent_home_loc_dist(this->MT);
+                // int idx=MT()%map.agent_home_locations.size();
+                loc=map.agent_home_locations[idx];
+            } else if (map.grid_types[prev_task_loc]=='w')
+            {
+                // next task would e
+                int idx=MT()%map.end_points.size();
+                loc=map.end_points[idx];
+            } else {
+                std::cout<<"unkonw grid type"<<std::endl;
+                exit(-1);
+            }
+            
+            Task task(task_id,loc,timestep,k);
+            assigned_tasks[k].push_back(task);
+            events[k].push_back(make_tuple(task.task_id,timestep,"assigned"));
+            log_event_assigned(k, task.task_id, timestep);
+            all_tasks.push_back(task);
+            prev_task_locs[k]=loc;
+            task_id++;
         }
     }
 }
@@ -1765,7 +1856,7 @@ void TaskAssignSystem::update_tasks()
 {
     for (int k = 0; k < num_of_agents; k++)
     {
-        while (assigned_tasks[k].size() < num_tasks_reveal && !task_queue.empty())
+        /* while (assigned_tasks[k].size() < num_tasks_reveal && !task_queue.empty())
         {
             std::cout << "assigned task " << task_queue.front().task_id <<
                 " with loc " << task_queue.front().location << " to agent " << k << std::endl;
@@ -1777,6 +1868,61 @@ void TaskAssignSystem::update_tasks()
             events[k].push_back(make_tuple(task.task_id,timestep,"assigned"));
             all_tasks.push_back(task);
             log_event_assigned(k, task.task_id, timestep);
+        }*/
+
+        if (assigned_tasks[k].size() <= 1)
+        {
+            int closest_dist = 10000000;
+            int closest_index = 0;
+
+            for (size_t i = 0; i < 400; i += 2)
+            {
+                int loc1 = prev_task_locs[k];
+                int loc2 = task_queue[i].location;
+                int cols = 500;
+                int real_dist = abs(loc1 / cols - loc2 / cols) + abs(loc1 % cols - loc2 % cols);
+
+                if (real_dist < closest_dist)
+                {
+                    closest_dist = real_dist;
+                    closest_index = i;
+                }
+            }
+
+            // std::cout << "previous loc is " << prev_task_locs[k] << "\n";
+
+            // std::cout << "closest task is " << closest_index << "\n";
+
+            // std::cout << "Taskqueue length is " << task_queue.size() << "\n";
+
+            // closest_index = 0;
+
+            Task task_start = task_queue[closest_index];
+            // std::cout << "assigned task start " << task_start.task_id << " with loc " << task_start.location << " to agent " << k << std::endl;
+            Task task_end = task_queue[closest_index + 1];
+            // std::cout << "assigned task end " << task_end.task_id << " with loc " << task_end.location << " to agent " << k << std::endl;
+            // task_queue.pop_front();
+            // task_queue.pop_front();
+
+            task_queue.erase(task_queue.begin() + closest_index, task_queue.begin() + closest_index + 2);
+
+            task_start.t_assigned = timestep;
+            task_start.agent_assigned = k;
+
+            task_end.t_assigned = timestep;
+            task_end.agent_assigned = k;
+
+            assigned_tasks[k].push_back(task_start);
+            assigned_tasks[k].push_back(task_end);
+
+            prev_task_locs[k] = task_end.location;
+
+            events[k].push_back(make_tuple(task_start.task_id, timestep, "assigned"));
+            events[k].push_back(make_tuple(task_end.task_id, timestep, "assigned"));
+            all_tasks.push_back(task_start);
+            all_tasks.push_back(task_end);
+            log_event_assigned(k, task_start.task_id, timestep);
+            log_event_assigned(k, task_end.task_id, timestep);
         }
     }
 }

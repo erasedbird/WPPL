@@ -1,6 +1,6 @@
 #include "util/CompetitionActionModel.h"
 
-bool CompetitionActionModelWithRotate::is_valid(const vector<State>& prev, const vector<Action> & actions)
+/* bool CompetitionActionModelWithRotate::is_valid(const vector<State>& prev, const vector<Action> & actions)
 {
     if (prev.size() != actions.size())
     {
@@ -83,3 +83,4 @@ bool CompetitionActionModelWithRotate::is_valid(const vector<State>& prev, const
 
     return true;
 }
+*/

@@ -74,6 +74,8 @@ void CompetitionGraph::preprocessing(bool consider_rotation, const string & file
 	this->consider_rotation = consider_rotation;
 	std::string fname=map_name.substr(0,map_name.size()-4);
     std::string folder=file_storage_path;
+
+    std::cout << fname << " " << folder << "\n";
     if (folder[folder.size()-1]!=boost::filesystem::path::preferred_separator){
         folder+=boost::filesystem::path::preferred_separator;
     }
@@ -81,10 +83,14 @@ void CompetitionGraph::preprocessing(bool consider_rotation, const string & file
 		fname = folder + fname + "_rotation_heuristics_table.gz";
 	else
 		fname = folder + fname + "_heuristics_table.gz";
+
+    std::cout << fname << " after consider rot\n";
 	std::ifstream myfile(fname.c_str(),std::ios::binary|std::ios::in);
+    std::cout << fname << " after ifstream\n";
 	bool succ = false;
-	if (myfile.is_open())
+	if (false && myfile.is_open())
 	{
+        std::cout << fname << " loading file into heuristics table\n";
 		succ = load_heuristics_table(myfile);
 		myfile.close();
 	}
@@ -153,8 +159,12 @@ void CompetitionGraph::preprocessing(bool consider_rotation, const string & file
         delete [] lengths;
         delete [] visited;
         delete [] queues;
+
+        std::cout << "saving heuristics table\n";
         
 		save_heuristics_table(fname);
+
+        std::cout << "saved heuristics table \n";
 	}
 
     auto pp_end = std::chrono::steady_clock::now();
@@ -230,6 +240,7 @@ void CompetitionGraph::compute_heuristics(
 
 bool CompetitionGraph::load_heuristics_table(std::ifstream& myfile)
 {
+    std::cout << "here we go \n";
     auto start = std::chrono::steady_clock::now();
 
     // TODO: we need to test the loading speed for compressed & uncompressed version.
@@ -409,9 +420,13 @@ void CompetitionGraph::save_heuristics_table(std::string fname)
     end = std::chrono::steady_clock::now();
 	runtime = std::chrono::duration<double>(end-start).count();
     std::cerr << "write out heuristics table (" << runtime << " s)" << std::endl;
+    // std::cout << "N " << N  << " fname " << fname<< "\n";
 
     boost::iostreams::close(outbuf);
+    // std::cout << "boost iostream closed\n";
     myfile.close();
+
+    // std::cout << "done closing file \n";
 
     delete [] buff;
     delete [] locs;

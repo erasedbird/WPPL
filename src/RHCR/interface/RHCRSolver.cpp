@@ -20,11 +20,13 @@ vector<State> convert_states_type(const vector<::State> & states){
     return new_states;
 }
 
-Action get_action_from_states(const State & state, const State & next_state, bool consider_rotation){
+/* Action get_action_from_states(const State & state, const State & next_state, bool consider_rotation){
     assert(state.timestep+1==next_state.timestep);
     // TODO: assert consider_rotation
 
     if (consider_rotation){
+        std::cout << "----------rhcr-----------\n";
+        std::cout << state.location << " " << next_state.location << "\n";
         if (state.location==next_state.location){
             // either turn or wait
             if (state.orientation==next_state.orientation) {
@@ -46,7 +48,7 @@ Action get_action_from_states(const State & state, const State & next_state, boo
         assert(false);
         return Action::W;
     }
-}
+}*/
 
 void debug_agent(int agent,const vector<State> &starts,const vector< vector<pair<int, int> > > & goal_locations) {
     cerr<<"plan for agent "<<agent<<": ";

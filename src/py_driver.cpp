@@ -416,6 +416,7 @@ std::string run(const py::kwargs& kwargs)
         
         uint seed=kwargs["seed"].cast<uint>();
         system_ptr = std::make_unique<KivaSystem>(grid,planner,model,num_agents,seed);
+        // system_ptr = std::make_unique<FixedAssignSystem>(grid, planner, agents, assigned_tasks, model);
     }
 
     system_ptr->set_logger(logger);

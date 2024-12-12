@@ -1,5 +1,7 @@
 #ifndef NO_ROT
 
+// TODO RHCR: make RHCR available for no-rot
+
 #include <MAPFPlanner.h>
 #include <random>
 #include "RHCR/interface/CompetitionGraph.h"
@@ -78,6 +80,8 @@ void MAPFPlanner::load_configs() {
 }
 
 RHCR::MAPFSolver* MAPFPlanner::rhcr_build_mapf_solver(nlohmann::json & config, RHCR::CompetitionGraph & graph) {
+    std::cout <<"building rhcr solver\n";
+    
     // build single agent solver
     string solver_name = read_param_json<string>(config,"single_agent_solver");
 	RHCR::SingleAgentSolver* path_planner;
@@ -240,13 +244,20 @@ void MAPFPlanner::initialize(int preprocess_time_limit) {
 
     lifelong_solver_name=config["lifelong_solver_name"];
 
+    std::cout << "lifelong solver is " << lifelong_solver_name << "\n";
+
     // TODO: memory management is a disaster here...
     if (lifelong_solver_name=="RHCR") {
+        std::cout << " start competition graph \n";
         auto graph = new RHCR::CompetitionGraph(*env);
+        std::cout << " graph done competition graph \n";
         graph->preprocessing(consider_rotation,env->file_storage_path);
+        std::cout << " start building solver \n";
         auto mapf_solver=rhcr_build_mapf_solver(config["RHCR"],*graph);
         rhcr_solver = std::make_shared<RHCR::RHCRSolver>(*graph,*mapf_solver,env);
+        std::cout << "config solver \n";
         rhcr_config_solver(rhcr_solver,config["RHCR"]);
+        std::cout << "solver configed, initializing \n";
         rhcr_solver->initialize(*env);
         cout<<"RHCRSolver initialized"<<endl;
     } else if (lifelong_solver_name=="LaCAM2") {
@@ -489,11 +500,51 @@ list<pair<int,int>> MAPFPlanner::getNeighbors(int location,int direction) {
 
 #include <MAPFPlanner.h>
 #include <random>
+#include "RHCR/interface/CompetitionGraph.h"
 #include "util/HeuristicTable.h"
 #include "util/Analyzer.h"
 #include "util/MyLogger.h"
 #include "boost/format.hpp"
 #include "util/MyCommon.h"
+#include "util/TimeLimiter.h"
+
+
+
+struct AstarNode {
+
+    int location;
+
+    int direction;
+
+    int f,g,h;
+
+    AstarNode* parent;
+
+    int t = 0;
+
+    bool closed = false;
+
+    AstarNode(int _location,int _direction, int _g, int _h, AstarNode* _parent):
+
+        location(_location), direction(_direction),f(_g+_h),g(_g),h(_h),parent(_parent) {}
+
+    AstarNode(int _location,int _direction, int _g, int _h, int _t, AstarNode* _parent):
+
+        location(_location), direction(_direction),f(_g+_h),g(_g),h(_h),t(_t),parent(_parent) {}
+
+};
+
+struct cmp {
+
+    bool operator()(AstarNode* a, AstarNode* b) {
+
+        if(a->f == b->f) return a->g <= b->g;
+
+        else return a->f > b->f;
+
+    }
+
+};
 
 void MAPFPlanner::load_configs() {
     // load configs
@@ -539,6 +590,198 @@ void MAPFPlanner::load_configs() {
         std::cout << "Message: " << error.what() << std::endl;
         exit(1);
     }
+}
+
+RHCR::MAPFSolver* MAPFPlanner::rhcr_build_mapf_solver(nlohmann::json & config, RHCR::CompetitionGraph & graph) {
+
+    std::cout <<"building rhcr solver\n";
+
+    
+
+    // build single agent solver
+
+    string solver_name = read_param_json<string>(config,"single_agent_solver");
+
+	RHCR::SingleAgentSolver* path_planner;
+
+	RHCR::MAPFSolver* mapf_solver;
+
+	if (solver_name == "ASTAR")
+
+	{
+
+		path_planner = new RHCR::StateTimeAStar();
+
+	}
+
+	else if (solver_name == "SIPP")
+
+	{
+
+		path_planner = new RHCR::SIPP();
+
+	}
+
+	else
+
+	{
+
+		cout << "Single-agent solver " << solver_name << "does not exist!" << endl;
+
+		exit(-1);
+
+	}
+
+
+
+    // build multi-agent solver
+
+	solver_name = read_param_json<string>(config,"solver");
+
+	if (solver_name == "ECBS")
+
+	{
+
+		RHCR::ECBS* ecbs = new RHCR::ECBS(graph, *path_planner);
+
+		ecbs->potential_function = read_param_json<string>(config,"potential_function");
+
+		ecbs->potential_threshold = read_param_json<double>(config,"potential_threshold");
+
+		ecbs->suboptimal_bound = read_param_json<double>(config,"suboptimal_bound");
+
+		mapf_solver = ecbs;
+
+	}
+
+	else if (solver_name == "PBS")
+
+	{
+
+		RHCR::PBS* pbs = new RHCR::PBS(graph, *path_planner);
+
+		pbs->lazyPriority = read_param_json<bool>(config,"lazyP");
+
+        auto prioritize_start = read_param_json<bool>(config,"prioritize_start");
+
+        auto hold_endpoints = read_param_json<bool>(config,"hold_endpoints");
+
+        auto dummy_paths = read_param_json<bool>(config,"dummy_paths");
+
+        if (hold_endpoints || dummy_paths)
+
+            prioritize_start = false;
+
+        pbs->prioritize_start = prioritize_start;
+
+        auto CAT = read_param_json<bool>(config,"CAT");
+
+        pbs->setRT(CAT, prioritize_start);
+
+		mapf_solver = pbs;
+
+	}
+
+	else if (solver_name == "WHCA")
+
+	{
+
+		mapf_solver = new RHCR::WHCAStar(graph, *path_planner);
+
+	}
+
+	else if (solver_name == "LRA")
+
+	{
+
+		mapf_solver = new RHCR::LRAStar(graph, *path_planner);
+
+	}
+
+	else
+
+	{
+
+		cout << "Solver " << solver_name << " does not exist!" << endl;
+
+		exit(-1);
+
+	}
+
+
+
+    auto id = read_param_json<bool>(config,"id");
+
+	if (id)
+
+	{
+
+		return new RHCR::ID(graph, *path_planner, *mapf_solver);
+
+	}
+
+	else
+
+	{
+
+		return mapf_solver;
+
+	}
+
+}
+
+
+
+void MAPFPlanner::rhcr_config_solver(std::shared_ptr<RHCR::RHCRSolver> & solver,nlohmann::json & config) {
+
+    solver->outfile = read_param_json<string>(config,"output");
+
+    solver->screen = read_param_json<int>(config,"screen");
+
+    solver->log = read_param_json<bool>(config,"log");
+
+    solver->num_of_drives = env->num_of_agents;
+
+    solver->time_limit = read_param_json<int>(config,"cutoffTime");
+
+    solver->simulation_window = read_param_json<int>(config,"simulation_window");
+
+    solver->planning_window = read_param_json<int>(config,"planning_window");
+
+    if (solver->simulation_window>solver->planning_window){
+
+        cerr<<boost::format("Error: the simulation window %d can not be larger than the planning window %d!")% \
+
+        solver->simulation_window % solver->planning_window<<endl;
+
+        exit(1);
+
+    }
+
+    solver->travel_time_window = read_param_json<int>(config,"travel_time_window");
+
+    solver->consider_rotation = read_param_json<bool>(config,"consider_rotation");
+
+    solver->k_robust = read_param_json<int>(config,"robust");
+
+    solver->hold_endpoints = read_param_json<bool>(config,"hold_endpoints");
+
+    solver->useDummyPaths = read_param_json<bool>(config,"dummy_paths");
+
+    auto seed = read_param_json<int>(config,"seed");
+
+    if (seed>=0) {
+
+        solver->seed = seed;
+
+    } else {
+
+        solver->seed = (int)time(0);
+
+    }
+
+    srand(solver->seed);
+
 }
 
 std::string MAPFPlanner::load_map_weights(string weights_path) {
@@ -614,7 +857,33 @@ void MAPFPlanner::initialize(int preprocess_time_limit) {
     lifelong_solver_name=config["lifelong_solver_name"];
 
     // TODO: memory management is a disaster here...
-    if (lifelong_solver_name=="LaCAM2") {
+    if (lifelong_solver_name=="RHCR") {
+
+        std::cout << " start competition graph \n";
+
+        auto graph = new RHCR::CompetitionGraph(*env);
+
+        std::cout << " graph done competition graph \n";
+
+        graph->preprocessing(consider_rotation,env->file_storage_path);
+
+        std::cout << " start building solver \n";
+
+        auto mapf_solver=rhcr_build_mapf_solver(config["RHCR"],*graph);
+
+        rhcr_solver = std::make_shared<RHCR::RHCRSolver>(*graph,*mapf_solver,env);
+
+        std::cout << "config solver \n";
+
+        rhcr_config_solver(rhcr_solver,config["RHCR"]);
+
+        std::cout << "solver configed, initializing \n";
+
+        rhcr_solver->initialize(*env);
+
+        cout<<"RHCRSolver initialized"<<endl;
+
+    } else if (lifelong_solver_name=="LaCAM2") {
         int max_agents_in_use=read_param_json<int>(config,"max_agents_in_use",-1);
         if (max_agents_in_use==-1) {
             max_agents_in_use=env->num_of_agents;
@@ -677,7 +946,15 @@ void MAPFPlanner::plan(int time_limit,vector<Action> & actions)
     }
 
 
-   if (lifelong_solver_name=="LaCAM2") {
+   if (lifelong_solver_name=="RHCR") {
+
+        cout<<"using RHCR"<<endl;
+
+        rhcr_solver->plan(*env);
+
+        rhcr_solver->get_step_actions(*env, actions);
+
+    } else if (lifelong_solver_name=="LaCAM2") {
         ONLYDEV(cout<<"using LaCAM2"<<endl;)
         lacam2_solver->plan(*env);
         lacam2_solver->get_step_actions(*env,actions);
@@ -692,6 +969,191 @@ void MAPFPlanner::plan(int time_limit,vector<Action> & actions)
     }
 
   return;
+}
+
+list<pair<int,int>> MAPFPlanner::single_agent_plan(int start,int start_direct,int end) {
+
+    list<pair<int,int>> path;
+
+    priority_queue<AstarNode*,vector<AstarNode*>,cmp> open_list;
+
+    unordered_map<int,AstarNode*> all_nodes;
+
+    unordered_set<int> close_list;
+
+    AstarNode* s = new AstarNode(start, start_direct, 0, getManhattanDistance(start,end), nullptr);
+
+    open_list.push(s);
+
+    all_nodes[start*4 + start_direct] = s;
+
+
+
+    while (!open_list.empty()) {
+
+        AstarNode* curr = open_list.top();
+
+        open_list.pop();
+
+        close_list.emplace(curr->location*4 + curr->direction);
+
+        if (curr->location == end) {
+
+            while(curr->parent!=NULL) {
+
+                path.emplace_front(make_pair(curr->location, curr->direction));
+
+                curr = curr->parent;
+
+            }
+
+            break;
+
+        }
+
+        list<pair<int,int>> neighbors = getNeighbors(curr->location, curr->direction);
+
+        for (const pair<int,int>& neighbor: neighbors) {
+
+            if (close_list.find(neighbor.first*4 + neighbor.second) != close_list.end())
+
+                continue;
+
+            if (all_nodes.find(neighbor.first*4 + neighbor.second) != all_nodes.end()) {
+
+                AstarNode* old = all_nodes[neighbor.first*4 + neighbor.second];
+
+                if (curr->g + 1 < old->g) {
+
+                    old->g = curr->g+1;
+
+                    old->f = old->h+old->g;
+
+                    old->parent = curr;
+
+                }
+
+            } else {
+
+                AstarNode* next_node = new AstarNode(neighbor.first, neighbor.second,
+
+                    curr->g+1,getManhattanDistance(neighbor.first,end), curr);
+
+                open_list.push(next_node);
+
+                all_nodes[neighbor.first*4+neighbor.second] = next_node;
+
+            }
+
+        }
+
+    }
+
+    for (auto n: all_nodes)
+
+    {
+
+        delete n.second;
+
+    }
+
+    all_nodes.clear();
+
+    return path;
+
+}
+
+
+
+
+
+int MAPFPlanner::getManhattanDistance(int loc1, int loc2) {
+
+    int loc1_x = loc1/env->cols;
+
+    int loc1_y = loc1%env->cols;
+
+    int loc2_x = loc2/env->cols;
+
+    int loc2_y = loc2%env->cols;
+
+    return abs(loc1_x - loc2_x) + abs(loc1_y - loc2_y);
+
+}
+
+
+
+bool MAPFPlanner::validateMove(int loc, int loc2)
+
+{
+
+    int loc_x = loc/env->cols;
+
+    int loc_y = loc%env->cols;
+
+
+
+    if (loc_x >= env->rows || loc_y >= env->cols || env->map[loc] == 1)
+
+        return false;
+
+
+
+    int loc2_x = loc2/env->cols;
+
+    int loc2_y = loc2%env->cols;
+
+    if (abs(loc_x-loc2_x) + abs(loc_y-loc2_y) > 1)
+
+        return false;
+
+    return true;
+
+
+
+}
+
+
+list<pair<int,int>> MAPFPlanner::getNeighbors(int location,int direction) {
+
+    list<pair<int,int>> neighbors;
+
+    //forward
+
+    int candidates[4] = { location + 1,location + env->cols, location - 1, location - env->cols};
+
+    int forward = candidates[direction];
+
+    int new_direction = direction;
+
+    if (forward>=0 && forward < env->map.size() && validateMove(forward,location))
+
+        neighbors.emplace_back(make_pair(forward,new_direction));
+
+    //turn left
+
+    new_direction = direction-1;
+
+    if (new_direction == -1)
+
+        new_direction = 3;
+
+    neighbors.emplace_back(make_pair(location,new_direction));
+
+    //turn right
+
+    new_direction = direction+1;
+
+    if (new_direction == 4)
+
+        new_direction = 0;
+
+    neighbors.emplace_back(make_pair(location,new_direction));
+
+    neighbors.emplace_back(make_pair(location,direction)); //wait
+
+    return neighbors;
+
 }
 
 #endif

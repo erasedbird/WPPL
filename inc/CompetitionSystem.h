@@ -239,6 +239,48 @@ private:
     void resume_from_file(string fname, int w);
 };
 
+class KivaSystem: public BaseSystem 
+{
+public:
+    KivaSystem(Grid &grid, MAPFPlanner* planner, ActionModelWithRotate* model, int num_agents, uint seed):
+        BaseSystem(grid, planner, model), MT(seed), task_id(0)
+    {
+        num_of_agents = num_agents;
+        starts.resize(num_of_agents);
+
+        std::shuffle(grid.empty_locations.begin(),grid.empty_locations.end(), MT);
+
+        for (size_t i = 0; i < num_of_agents; i++)
+        {
+            starts[i] = State(grid.empty_locations[i], 0, -1);
+            prev_task_locs.push_back(grid.empty_locations[i]);
+        }
+
+        // Initialize agent home location (workstation) distribution
+
+        this->agent_home_loc_dist = std::discrete_distribution<int>(
+            grid.agent_home_loc_weights.begin(),
+            grid.agent_home_loc_weights.end());
+        cout << "agent_home_loc distribution: ";
+        for (auto w: grid.agent_home_loc_weights)
+        {
+            cout << w << ", ";
+        }
+        cout << endl;
+
+    };
+
+private:
+    std::mt19937 MT;
+    int task_id=0;
+
+    void update_tasks();
+    std::discrete_distribution<int> agent_home_loc_dist;
+
+    std::vector<int> prev_task_locs;
+
+};
+
 #else
 
 class BaseSystem
@@ -390,31 +432,31 @@ private:
 class TaskAssignSystem : public BaseSystem
 {
 public:
-	TaskAssignSystem(Grid &grid, MAPFPlanner* planner, std::vector<int>& start_locs, std::vector<int>& tasks, ActionModelWithRotate* model):
-        BaseSystem(grid, planner, model)
+    TaskAssignSystem(Grid &grid, MAPFPlanner *planner, std::vector<int> &start_locs, std::vector<int> &tasks, ActionModelWithRotate *model) : BaseSystem(grid, planner, model)
     {
         int task_id = 0;
-        for (auto& task_location: tasks)
+        for (auto &task_location : tasks)
         {
             all_tasks.emplace_back(task_id++, task_location);
             task_queue.emplace_back(all_tasks.back().task_id, all_tasks.back().location);
-            //task_queue.emplace_back(task_id++, task_location);
+            // task_queue.emplace_back(task_id++, task_location);
         }
         num_of_agents = start_locs.size();
         starts.resize(num_of_agents);
         for (size_t i = 0; i < start_locs.size(); i++)
         {
             starts[i] = State(start_locs[i], 0, -1);
+            prev_task_locs.push_back(start_locs[i]);
         }
     };
 
-	~TaskAssignSystem(){};
-
+    ~TaskAssignSystem() {};
 
 private:
     deque<Task> task_queue;
+    std::vector<int> prev_task_locs;
 
-	void update_tasks();
+    void update_tasks();
 };
 
 
