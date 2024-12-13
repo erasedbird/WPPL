@@ -1895,7 +1895,7 @@ void TaskAssignSystem::update_tasks()
 
             // std::cout << "Taskqueue length is " << task_queue.size() << "\n";
 
-            // closest_index = 0;
+            closest_index = 0;
 
             Task task_start = task_queue[closest_index];
             // std::cout << "assigned task start " << task_start.task_id << " with loc " << task_start.location << " to agent " << k << std::endl;

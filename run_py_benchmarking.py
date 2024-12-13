@@ -5,6 +5,7 @@ sys.path.append(os.path.abspath("build"))
 sys.path.append('scripts')
 from map import Map
 import json
+import random
 
 map_path="/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/maps/symbotic_medium.map"
 # full_weight_path="scripts/random_weight_001.w"
@@ -12,6 +13,13 @@ with_wait_costs=True
 
 map=Map(map_path)
 map.print_graph(map.graph)
+
+def write_into_file(filename, my_list):
+    with open(filename, 'w') as file:
+        file.write(f"{len(my_list)}\n")
+    
+        for item in my_list:
+            file.write(f"{item}\n")
 
 def get_matching_coordinates(file_path, character):
     coordinates = []
@@ -34,9 +42,30 @@ def get_matching_coordinates(file_path, character):
     
     return coordinates
 
-spawn_locs = get_matching_coordinates(map_path, "r")
+spawn_locs = []# get_matching_coordinates(map_path, "r")
 inbound_locs = get_matching_coordinates(map_path, "i")
-aisles_locs = get_matching_coordinates(map_path, "o")
+aisles_locs = get_matching_coordinates(map_path, "a")
+outbound_locs = get_matching_coordinates(map_path, "a")
+extra_spawn_locs = get_matching_coordinates(map_path, "o")
+
+while(len(spawn_locs) < 50):
+    spawn_locs.append(random.choice(aisles_locs))
+
+random.shuffle(spawn_locs)
+write_into_file("/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_50.agents", spawn_locs)
+
+tasks = []
+
+for i in range(10000):
+    random_number = random.randint(0, 1)
+    if random_number:
+        tasks.append(random.choice(inbound_locs))
+        tasks.append(random.choice(aisles_locs))
+    else:
+        tasks.append(random.choice(aisles_locs))
+        tasks.append(random.choice(outbound_locs))
+
+write_into_file("/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/tasks/symbotic_medium.tasks", tasks)
 
 breakpoint()
 
@@ -53,34 +82,34 @@ import py_driver # type: ignore # ignore pylance warning
 print(py_driver.playground())
 
 import json
-config_path="configs/lns_default_no_rot.json"
+config_path="configs/rhcr_pbs_no_rot.json"
 with open(config_path) as f:
     config=json.load(f)
     config_str=json.dumps(config)
 
-agents_paths = [10, 50, 60, 100, 200, 400, 800]
+agents_paths = [50]
 
 for agents_num in agents_paths:
     ret=py_driver.run(
         # For map, it uses map_path by default. If not provided, it'll use map_json
         # which contains json string of the map
-        map_path="Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/maps/warehouse_small.map",
+        map_path="Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/maps/symbotic_medium.map",
         # map_json_str = map_json_str,
         # map_json_path = map_json_path,
-        simulation_steps=500,
+        simulation_steps=800,
         # for the problem instance we use:
         # if random then we need specify the number of agents and total tasks, also random seed,
         gen_random=False,
         num_agents=agents_num,
-        num_tasks=100000,
+        num_tasks=20000,
         seed=0,
         save_paths=True,
         # weight of the left/right workstation, only applicable for maps with workstations
         left_w_weight=1,
         right_w_weight=1,
         # else we need specify agents and tasks path to load data.
-        agents_path=f"Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/warehouse_small_{agents_num}.agents",
-        tasks_path="Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/tasks/warehouse_small.tasks",
+        agents_path=f"Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_50.agents",
+        tasks_path="Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/tasks/symbotic_medium.tasks",
         # weights are the edge weights, wait_costs are the vertex wait costs
         # if not specified here, then the program will use the one specified in the config file.
         # weights=compressed_weights_json_str,

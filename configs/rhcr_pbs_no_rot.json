@@ -1,7 +1,7 @@
 {
     "lifelong_solver_name": "RHCR",
     "map_weights_path": "",
-    "max_execution_steps": 500,
+    "max_execution_steps": 800,
     "max_task_completed": 1000000,
     "max_agents_in_use": -1,
     "disable_corner_target_agents": false,
@@ -11,7 +11,7 @@
         "execution_window": 5,
         "use_external_executor": true,
         "consider_rotation": false,
-        "use_orient_in_heuristic": true,
+        "use_orient_in_heuristic": false,
         "use_slow_executor": false,
         "SUO": {
             "vertex_collision_cost": 1,
@@ -38,7 +38,8 @@
         "log": true,
         "cutoffTime": 60,
         "simulation_window": 5,
-        "robust": 0
+        "robust": 0,
+        "low_level_planning_window": 5
     },
     "analysis_output": "analysis/test.csv"
 }
