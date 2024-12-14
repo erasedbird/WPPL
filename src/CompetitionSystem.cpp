@@ -1226,7 +1226,7 @@ void BaseSystem::simulate(int simulation_time)
         cout << "Timestep " << timestep << std::endl;
 
         // find a plan
-        std::cout << "start sync\n";
+        // std::cout << "start sync\n";
         sync_shared_env();
         // vector<Action> actions = planner->plan(plan_time_limit);
         // vector<Action> actions;
@@ -1234,7 +1234,7 @@ void BaseSystem::simulate(int simulation_time)
 
         auto start = std::chrono::steady_clock::now();
 
-        std::cout << "start plan\n";
+        // std::cout << "start plan\n";
 
         vector<Action> actions = plan();
 
@@ -1261,7 +1261,7 @@ void BaseSystem::simulate(int simulation_time)
             if (!env->goal_locations[a].empty())
                 solution_costs[a]++;
         }
-        std::cout << "start move\n";
+        // std::cout << "start move\n";
 
         // move drives
         list<Task> new_finished_tasks = move(actions);
@@ -1289,9 +1289,7 @@ void BaseSystem::simulate(int simulation_time)
 
         ONLYDEV(analyzer.data["finished_tasks"]=num_of_tasks;)
 
-        if (timestep%5==0) cout <<"update here "<<timestep << "\n";
-        
-        update_tasks();
+        if (timestep%5==0) update_tasks();
 
         bool complete_all = false;
         for (auto & t: assigned_tasks)
@@ -1957,59 +1955,74 @@ void TaskAssignSystem::update_tasks()
             log_event_assigned(k, task.task_id, timestep);
         } 
         
-        if (assigned_tasks[k].size() <= 1)
+        int cols = env -> cols;
+        int goal = assigned_tasks[k].back().location;
+        int loc = curr_states[k].location;
+        int loading = prev_task_locs[k].back();
+        int min_timesteps = abs(goal / cols - loc / cols) + abs(goal % cols - loc % cols);
+
+        // cout << "goal is " << goal << " state is " << loc << "\n";
+
+        while (min_timesteps <= 5)
         {
-            int closest_dist = 10000000;
-            int closest_index = 0;
+            int next;
 
-            for (size_t i = 0; i < 400; i += 2)
-            {
-                int loc1 = prev_task_locs[k][prev_task_locs.size()-1]; // need to pick end from this
-                int loc2 = task_queue[i].location;
-                int cols = 500;
-                int real_dist = abs(loc1 / cols - loc2 / cols) + abs(loc1 % cols - loc2 % cols);
-
-                if (real_dist < closest_dist)
+            if((std::count(inbound_locs.begin(), inbound_locs.end(), goal) > 0)){
+                // cout << "I'm in inbounds \n";
+                next = assign_aisle_station();
+                prev_task_locs[k].push_back(0);
+            } else if ((std::count(outbound_locs.begin(), outbound_locs.end(), goal) > 0))
+			{
+                // cout << "I'm in outbounds \n";
+                if (rand()%2 == 0)
                 {
-                    closest_dist = real_dist;
-                    closest_index = i;
+                    next = assign_inbound_station();
                 }
+                else
+                {
+                    next = assign_aisle_station();
+                }
+				
+                prev_task_locs[k].push_back(1);
+			}
+            else if ((std::count(aisles_locs.begin(), aisles_locs.end(), goal) > 0))
+            {
+                // cout << "rand seed here aisles " << rand() << "\n";
+                if (loading == 0)
+                {
+                    if (rand()%2 == 0)
+                    {
+                        next = assign_inbound_station();
+                    }
+                    else
+                    {
+                        next = assign_aisle_station();
+                    }
+                    
+                    prev_task_locs[k].push_back(1);
+                }
+                else
+                {
+                    next = assign_outbound_station();
+                    prev_task_locs[k].push_back(0);
+                }
+                
             }
 
-            // std::cout << "previous loc is " << prev_task_locs[k] << "\n";
+            Task new_task = Task(task_id++, next);
 
-            // std::cout << "closest task is " << closest_index << "\n";
+            new_task.t_assigned = timestep;
+            new_task.agent_assigned = k;
+            assigned_tasks[k].push_back(new_task);
 
-            // std::cout << "Taskqueue length is " << task_queue.size() << "\n";
+            events[k].push_back(make_tuple(new_task.task_id, timestep, "assigned"));
+            all_tasks.push_back(new_task);
+            log_event_assigned(k, new_task.task_id, timestep);
 
-            closest_index = 0;
+            goal = next;
+            min_timesteps += abs(goal / cols - loc / cols) + abs(goal % cols - loc % cols);
 
-            Task task_start = task_queue[closest_index];
-            // std::cout << "assigned task start " << task_start.task_id << " with loc " << task_start.location << " to agent " << k << std::endl;
-            Task task_end = task_queue[closest_index + 1];
-            // std::cout << "assigned task end " << task_end.task_id << " with loc " << task_end.location << " to agent " << k << std::endl;
-            // task_queue.pop_front();
-            // task_queue.pop_front();
-
-            task_queue.erase(task_queue.begin() + closest_index, task_queue.begin() + closest_index + 2);
-
-            task_start.t_assigned = timestep;
-            task_start.agent_assigned = k;
-
-            task_end.t_assigned = timestep;
-            task_end.agent_assigned = k;
-
-            assigned_tasks[k].push_back(task_start);
-            assigned_tasks[k].push_back(task_end);
-
-            prev_task_locs[k].push_back(task_end.location);
-
-            events[k].push_back(make_tuple(task_start.task_id, timestep, "assigned"));
-            events[k].push_back(make_tuple(task_end.task_id, timestep, "assigned"));
-            all_tasks.push_back(task_start);
-            all_tasks.push_back(task_end);
-            log_event_assigned(k, task_start.task_id, timestep);
-            log_event_assigned(k, task_end.task_id, timestep);
+            cout << next << " was assigned to " << k << "\n";
         }
     }
 }

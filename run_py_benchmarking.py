@@ -45,7 +45,7 @@ def get_matching_coordinates(file_path, character, char_list = []):
 spawn_locs = get_matching_coordinates(map_path, "r", ["o", "i", "."])
 inbound_locs = get_matching_coordinates(map_path, "i")
 aisles_locs = get_matching_coordinates(map_path, "a")
-outbound_locs = get_matching_coordinates(map_path, "a")
+outbound_locs = get_matching_coordinates(map_path, "o")
 extra_spawn_locs = get_matching_coordinates(map_path, "o")
 
 breakpoint()

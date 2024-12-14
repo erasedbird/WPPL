@@ -440,7 +440,7 @@ class TaskAssignSystem : public BaseSystem
 public:
     TaskAssignSystem(Grid &grid, MAPFPlanner *planner, std::vector<int> &start_locs, std::vector<int> &tasks, ActionModelWithRotate *model) : BaseSystem(grid, planner, model)
     {
-        int task_id = 0;
+        task_id = 0;
         for (auto &task_location : tasks)
         {
             all_tasks.emplace_back(task_id++, task_location);
@@ -460,7 +460,7 @@ public:
 
     TaskAssignSystem(Grid &grid, MAPFPlanner *planner, std::vector<int> &start_locs, std::vector<int> &tasks, std::vector<int> &inbounds, std::vector<int> &outbounds, std::vector<int> &aisles, std::vector<int> &load, ActionModelWithRotate *model) : BaseSystem(grid, planner, model)
     {
-        int task_id = 0;
+        task_id = 0;
         for (auto &task_location : tasks)
         {
             all_tasks.emplace_back(task_id++, task_location);
@@ -482,10 +482,13 @@ public:
             // std::cout << i << " got goal " << tasks[i] << "\n";
         }
 
+        cout << "inbound: ";
         for (auto &loc : inbounds)
         {
+            cout << loc << ", ";
             inbound_locs.push_back(loc);
         }
+        cout << "\n";
 
         for (auto &loc : outbounds)
         {
@@ -503,6 +506,8 @@ public:
     int assign_inbound_station();
     int assign_outbound_station();
     int assign_aisle_station();
+
+    int task_id;
 
 private:
     deque<Task> task_queue;
