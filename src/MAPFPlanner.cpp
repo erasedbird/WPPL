@@ -780,7 +780,7 @@ void MAPFPlanner::rhcr_config_solver(std::shared_ptr<RHCR::RHCRSolver> & solver,
 
     }
 
-    srand(solver->seed);
+    // srand(solver->seed); // come back here
 
 }
 

@@ -193,8 +193,8 @@ void BaseSystem::simulate(int simulation_time)
 
     for (; timestep < simulation_time; )
     {
-        // cout << "----------------------------" << std::endl;
-        // cout << "Timestep " << timestep << std::endl;
+        cout << "----------------------------" << std::endl;
+        cout << "Timestep " << timestep << std::endl;
 
         // find a plan
         sync_shared_env();
@@ -849,10 +849,38 @@ void FixedAssignSystem::update_tasks()
 }
 
 
+int TaskAssignSystem::assign_aisle_station(){
+    int assigned_aisle;
+    int N_asiles = aisles_locs.size();
+    int idx = rand() % N_asiles;
+    assigned_aisle = aisles_locs[idx];
+
+    return assigned_aisle;
+}
+
+int TaskAssignSystem::assign_inbound_station(){
+    int assigned_inbound;
+    int N_asiles = inbound_locs.size();
+    int idx = rand() % N_asiles;
+    assigned_inbound = inbound_locs[idx];
+
+    return assigned_inbound;
+}
+
+int TaskAssignSystem::assign_outbound_station(){
+    int assigned_outbound;
+    int N_asiles = outbound_locs.size();
+    int idx = rand() % N_asiles;
+    assigned_outbound = outbound_locs[idx];
+
+    return assigned_outbound;
+}
+
 void TaskAssignSystem::update_tasks()
 {
     for (int k = 0; k < num_of_agents; k++)
     {
+
         /* while (assigned_tasks[k].size() < num_tasks_reveal && !task_queue.empty())
         {
             std::cout << "assigned task " << task_queue.front().task_id <<
@@ -867,16 +895,27 @@ void TaskAssignSystem::update_tasks()
             log_event_assigned(k, task.task_id, timestep);
         }*/
 
-        if (assigned_tasks[k].size() <= 1)
+        if (assigned_tasks[k].size()==0){
+            std::cout << "initialized task " << task_queue.front().task_id <<
+                " with loc " << task_queue.front().location << " to agent " << k << std::endl;
+            Task task = task_queue.front();
+            task.t_assigned = timestep;
+            task.agent_assigned = k;
+            task_queue.pop_front();
+            assigned_tasks[k].push_back(task);
+            events[k].push_back(make_tuple(task.task_id,timestep,"assigned"));
+            all_tasks.push_back(task);
+            log_event_assigned(k, task.task_id, timestep);
+        } else if (assigned_tasks[k].size() <= 1)
         {
             int closest_dist = 10000000;
             int closest_index = 0;
 
-            for (size_t i = 0; i < 400; i += 2)
+            /* for (size_t i = 0; i < 400; i += 2)
             {
                 int loc1 = prev_task_locs[k];
                 int loc2 = task_queue[i].location;
-                int cols = 57;
+                int cols = env->cols;
                 int real_dist = abs(loc1 / cols - loc2 / cols) + abs(loc1 % cols - loc2 % cols);
 
                 if (real_dist < closest_dist)
@@ -884,7 +923,7 @@ void TaskAssignSystem::update_tasks()
                     closest_dist = real_dist;
                     closest_index = i;
                 }
-            }
+            }*/ 
 
             // std::cout << "previous loc is " << prev_task_locs[k] << "\n";
 
@@ -892,7 +931,7 @@ void TaskAssignSystem::update_tasks()
 
             // std::cout << "Taskqueue length is " << task_queue.size() << "\n";
 
-            // closest_index = 0;
+            closest_index = 0;
 
             Task task_start = task_queue[closest_index];
             // std::cout << "assigned task start " << task_start.task_id << " with loc " << task_start.location << " to agent " << k << std::endl;
@@ -1172,25 +1211,30 @@ void BaseSystem::simulate(int simulation_time)
 
     ONLYDEV(g_timer.record_p("simulate_start");)
 
+    std::cout << "start init\n";
+
     initialize();
+
+    std::cout << "end init\n";
 
     ONLYDEV(g_timer.record_d("simulate_start","initialize_end","initialization");)
     int num_of_tasks = 0;
 
     for (; timestep < simulation_time; )
     {
-        ONLYDEV(
-            cout << "----------------------------" << std::endl;
-            cout << "Timestep " << timestep << std::endl;
-        )
+        cout << "----------------------------" << std::endl;
+        cout << "Timestep " << timestep << std::endl;
 
         // find a plan
+        std::cout << "start sync\n";
         sync_shared_env();
         // vector<Action> actions = planner->plan(plan_time_limit);
         // vector<Action> actions;
         // planner->plan(plan_time_limit,actions);
 
         auto start = std::chrono::steady_clock::now();
+
+        std::cout << "start plan\n";
 
         vector<Action> actions = plan();
 
@@ -1217,6 +1261,7 @@ void BaseSystem::simulate(int simulation_time)
             if (!env->goal_locations[a].empty())
                 solution_costs[a]++;
         }
+        std::cout << "start move\n";
 
         // move drives
         list<Task> new_finished_tasks = move(actions);
@@ -1229,7 +1274,7 @@ void BaseSystem::simulate(int simulation_time)
             auto diff = end-start;
             planner_times.push_back(std::chrono::duration<double>(diff).count());
         }
-        ONLYDEV(cout << new_finished_tasks.size() << " tasks has been finished in this timestep" << std::endl;)
+        std::cout << new_finished_tasks.size() << " tasks has been finished in this timestep" << std::endl;
 
         // update tasks
         for (auto task : new_finished_tasks)
@@ -1244,6 +1289,8 @@ void BaseSystem::simulate(int simulation_time)
 
         ONLYDEV(analyzer.data["finished_tasks"]=num_of_tasks;)
 
+        if (timestep%5==0) cout <<"update here "<<timestep << "\n";
+        
         update_tasks();
 
         bool complete_all = false;
@@ -1290,7 +1337,7 @@ void BaseSystem::initialize()
     // bool succ = load_records(); // continue simulating from the records
     timestep = 0;
     curr_states = starts;
-    assigned_tasks.resize(num_of_agents);
+    if(assigned_tasks.size() == 0) assigned_tasks.resize(num_of_agents); // come back here
 
     //planner initilise before knowing the first goals
     auto planner_initialize_success= planner_initialize();
@@ -1851,9 +1898,36 @@ void FixedAssignSystem::update_tasks()
     }
 }
 
+int TaskAssignSystem::assign_aisle_station(){
+    int assigned_aisle;
+    int N_asiles = aisles_locs.size();
+    int idx = rand() % N_asiles;
+    assigned_aisle = aisles_locs[idx];
+
+    return assigned_aisle;
+}
+
+int TaskAssignSystem::assign_inbound_station(){
+    int assigned_inbound;
+    int N_asiles = inbound_locs.size();
+    int idx = rand() % N_asiles;
+    assigned_inbound = inbound_locs[idx];
+
+    return assigned_inbound;
+}
+
+int TaskAssignSystem::assign_outbound_station(){
+    int assigned_outbound;
+    int N_asiles = outbound_locs.size();
+    int idx = rand() % N_asiles;
+    assigned_outbound = outbound_locs[idx];
+
+    return assigned_outbound;
+}
 
 void TaskAssignSystem::update_tasks()
 {
+    cout << "running update tasks\n";
     for (int k = 0; k < num_of_agents; k++)
     {
         /* while (assigned_tasks[k].size() < num_tasks_reveal && !task_queue.empty())
@@ -1870,6 +1944,19 @@ void TaskAssignSystem::update_tasks()
             log_event_assigned(k, task.task_id, timestep);
         }*/
 
+        if (assigned_tasks[k].size()==0){
+            std::cout << "initialized task " << task_queue.front().task_id <<
+                " with loc " << task_queue.front().location << " to agent " << k << std::endl;
+            Task task = task_queue.front();
+            task.t_assigned = timestep;
+            task.agent_assigned = k;
+            task_queue.pop_front();
+            assigned_tasks[k].push_back(task);
+            events[k].push_back(make_tuple(task.task_id,timestep,"assigned"));
+            all_tasks.push_back(task);
+            log_event_assigned(k, task.task_id, timestep);
+        } 
+        
         if (assigned_tasks[k].size() <= 1)
         {
             int closest_dist = 10000000;
@@ -1877,7 +1964,7 @@ void TaskAssignSystem::update_tasks()
 
             for (size_t i = 0; i < 400; i += 2)
             {
-                int loc1 = prev_task_locs[k];
+                int loc1 = prev_task_locs[k][prev_task_locs.size()-1]; // need to pick end from this
                 int loc2 = task_queue[i].location;
                 int cols = 500;
                 int real_dist = abs(loc1 / cols - loc2 / cols) + abs(loc1 % cols - loc2 % cols);
@@ -1915,7 +2002,7 @@ void TaskAssignSystem::update_tasks()
             assigned_tasks[k].push_back(task_start);
             assigned_tasks[k].push_back(task_end);
 
-            prev_task_locs[k] = task_end.location;
+            prev_task_locs[k].push_back(task_end.location);
 
             events[k].push_back(make_tuple(task_start.task_id, timestep, "assigned"));
             events[k].push_back(make_tuple(task_end.task_id, timestep, "assigned"));

@@ -21,7 +21,7 @@ def write_into_file(filename, my_list):
         for item in my_list:
             file.write(f"{item}\n")
 
-def get_matching_coordinates(file_path, character):
+def get_matching_coordinates(file_path, character, char_list = []):
     coordinates = []
 
     with open(file_path, 'r') as file:
@@ -32,7 +32,7 @@ def get_matching_coordinates(file_path, character):
         for row_index, line in enumerate(lines):
             if map_data_start:
                 for col_index, char in enumerate(line.strip()):
-                    if char == character:
+                    if char == character or char in char_list:
                         #breakpoint()
                         coordinates.append(len(line.strip())*(row_index - map_start_row)+col_index)
             
@@ -42,17 +42,20 @@ def get_matching_coordinates(file_path, character):
     
     return coordinates
 
-spawn_locs = []# get_matching_coordinates(map_path, "r")
+spawn_locs = get_matching_coordinates(map_path, "r", ["o", "i", "."])
 inbound_locs = get_matching_coordinates(map_path, "i")
 aisles_locs = get_matching_coordinates(map_path, "a")
 outbound_locs = get_matching_coordinates(map_path, "a")
 extra_spawn_locs = get_matching_coordinates(map_path, "o")
 
-while(len(spawn_locs) < 50):
-    spawn_locs.append(random.choice(aisles_locs))
+breakpoint()
+write_into_file("/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_spawn.agents", spawn_locs)
+write_into_file("/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_inbound.agents", inbound_locs)
+write_into_file("/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_outbound.agents", outbound_locs)
+write_into_file("/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_aisles.agents", aisles_locs)
 
 random.shuffle(spawn_locs)
-write_into_file("/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_50.agents", spawn_locs)
+write_into_file("/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_50.agents", spawn_locs[:50])
 
 tasks = []
 
@@ -66,8 +69,6 @@ for i in range(10000):
         tasks.append(random.choice(outbound_locs))
 
 write_into_file("/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/tasks/symbotic_medium.tasks", tasks)
-
-breakpoint()
 
 '''map_json_path = "Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/maps/warehouse_small.map"
 with open(map_json_path, "r") as f:
@@ -108,6 +109,10 @@ for agents_num in agents_paths:
         left_w_weight=1,
         right_w_weight=1,
         # else we need specify agents and tasks path to load data.
+        spawn_locs = "Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_spawn.agents",
+        inbound_locs = "/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_inbound.agents",
+        outbound_locs = "/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_outbound.agents",
+        aisles_locs = "/mnt/home/ruthluvu/WPPL/Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_aisles.agents",
         agents_path=f"Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/agents/symbotic_medium_50.agents",
         tasks_path="Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/tasks/symbotic_medium.tasks",
         # weights are the edge weights, wait_costs are the vertex wait costs

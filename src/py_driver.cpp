@@ -361,15 +361,79 @@ std::string run(const py::kwargs& kwargs)
         std::vector<int> agents;
         std::vector<int> tasks;
 
+        std::vector<int> inbounds;
+        std::vector<int> outbounds;
+        std::vector<int> aisles;
+
+        std::vector<int> loading_track;
+
         if (!kwargs.contains("gen_random") || !kwargs["gen_random"].cast<bool>()){
             if (!kwargs.contains("agents_path") || !kwargs.contains("tasks_path")){
                 logger->log_fatal("agents_path and tasks_path must be provided if not generate instance randomly");
                 exit(1);
             }
-            auto agents_path = kwargs["agents_path"].cast<std::string>();
+            auto agents_path = kwargs["agents_path"].cast<std::string>(); //useless
             auto tasks_path = kwargs["tasks_path"].cast<std::string>();
-            agents = read_int_vec(agents_path);
+            int seed = kwargs["seed"].cast<int>();
+            agents = read_int_vec(agents_path); //useless
             tasks = read_int_vec(tasks_path);
+
+            std::srand(0);
+            // cout << rand() << "\n";
+
+            auto spawn_path = kwargs["spawn_locs"].cast<std::string>();
+            std::vector<int> spawns = read_int_vec(spawn_path);
+            shuffle(spawns.begin(), spawns.end(), std::default_random_engine());
+
+            for(int i = 0; i < spawns.size(); i++){
+                std::cout << spawns[i] << ", ";
+            }
+            std::cout << "\n";
+
+            std::vector<bool> used(spawns.size(), false);
+            
+            // aisles, inbounds, and outbounds
+            auto aisles_path = kwargs["aisles_locs"].cast<std::string>();
+            auto inbound_path = kwargs["inbound_locs"].cast<std::string>();
+            auto outbound_path = kwargs["outbound_locs"].cast<std::string>();
+
+            inbounds = read_int_vec(inbound_path);
+            outbounds = read_int_vec(outbound_path);
+            aisles = read_int_vec(aisles_path);
+
+            for (int k = 0; k < agents.size();)
+            {
+                int idx = rand() % spawns.size();
+                int loc = spawns[idx];
+                // if (G.types[loc] = "Home" && !used[loc])
+                if (!used[idx])
+                {
+                    agents[k] = spawns[idx];
+                    // paths[k].emplace_back(starts[k]);
+                    used[idx] = true;
+                    // finished_tasks[k].emplace_back(loc, 0);
+
+                    std::cout << k << " " << spawns[idx] << "\n";
+                    k++;
+                    // come back here
+                }
+            }
+
+            for (int k = 0; k < agents.size(); k++)
+            {
+                int goal;
+                goal = aisles[rand()%aisles.size()];
+                tasks[k] = goal;
+                if (rand() % 2 == 0)
+                {
+                    loading_track.push_back(0); // loading after the goal is arrived, 0 is without loading, 1 is with loading
+                }
+                else
+                {
+                    loading_track.push_back(1);
+                }
+            }
+
         } else {
             int num_agents=kwargs["num_agents"].cast<int>();
             int num_tasks=kwargs["num_tasks"].cast<int>();
@@ -384,7 +448,7 @@ std::string run(const py::kwargs& kwargs)
         // std::string task_assignment_strategy = data["taskAssignmentStrategy"].get<std::string>();
         if (task_assignment_strategy == "greedy")
         {
-            system_ptr = std::make_unique<TaskAssignSystem>(grid, planner, agents, tasks, model);
+            system_ptr = std::make_unique<TaskAssignSystem>(grid, planner, agents, tasks, inbounds, outbounds, aisles, loading_track, model);
         }
         else if (task_assignment_strategy == "roundrobin")
         {

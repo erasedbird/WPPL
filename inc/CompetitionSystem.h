@@ -168,7 +168,7 @@ private:
 class TaskAssignSystem : public BaseSystem
 {
 public:
-	TaskAssignSystem(Grid &grid, MAPFPlanner* planner, std::vector<int>& start_locs, std::vector<int>& tasks, ActionModelWithRotate* model):
+	TaskAssignSystem(Grid &grid, MAPFPlanner* planner, std::vector<int>& start_locs, std::vector<int>& tasks, std::vector<int>& inbound, std::vector<int>& outbound, std::vector<int>& aisles, std::vector<int>& load, ActionModelWithRotate* model):
         BaseSystem(grid, planner, model)
     {
         int task_id = 0;
@@ -183,6 +183,8 @@ public:
         for (size_t i = 0; i < start_locs.size(); i++)
         {
             starts[i] = State(start_locs[i], 0, 0);
+            assigned_tasks[i] = tasks[i];
+            std::cout << i << " got goal " << tasks[i];
         }
     };
 
@@ -191,6 +193,10 @@ public:
 
 private:
     deque<Task> task_queue;
+
+    deque<Task> inbound;
+    deque<Task> outbound;
+    deque<Task> aisles;
 
 	void update_tasks();
 };
@@ -443,18 +449,68 @@ public:
         }
         num_of_agents = start_locs.size();
         starts.resize(num_of_agents);
+        prev_task_locs.resize(num_of_agents);
         for (size_t i = 0; i < start_locs.size(); i++)
         {
             starts[i] = State(start_locs[i], 0, -1);
-            prev_task_locs.push_back(start_locs[i]);
+            prev_task_locs[i].push_back(start_locs[i]);
+            
+        }
+    };
+
+    TaskAssignSystem(Grid &grid, MAPFPlanner *planner, std::vector<int> &start_locs, std::vector<int> &tasks, std::vector<int> &inbounds, std::vector<int> &outbounds, std::vector<int> &aisles, std::vector<int> &load, ActionModelWithRotate *model) : BaseSystem(grid, planner, model)
+    {
+        int task_id = 0;
+        for (auto &task_location : tasks)
+        {
+            all_tasks.emplace_back(task_id++, task_location);
+            task_queue.emplace_back(all_tasks.back().task_id, all_tasks.back().location);
+            // task_queue.emplace_back(task_id++, task_location);
+        }
+        num_of_agents = start_locs.size();
+        starts.resize(num_of_agents);
+        assigned_tasks.resize(num_of_agents);
+        prev_task_locs.resize(num_of_agents);
+        task_id = 0;
+        for (size_t i = 0; i < start_locs.size(); i++)
+        {
+            starts[i] = State(start_locs[i], 0, -1);
+            prev_task_locs[i].push_back(load[i]);
+
+            // std::cout << assigned_tasks.size() << " assigned task size\n";
+            // assigned_tasks[i].push_back(Task(task_id++, tasks[i]));
+            // std::cout << i << " got goal " << tasks[i] << "\n";
+        }
+
+        for (auto &loc : inbounds)
+        {
+            inbound_locs.push_back(loc);
+        }
+
+        for (auto &loc : outbounds)
+        {
+            outbound_locs.push_back(loc);
+        }
+
+        for (auto &loc : aisles)
+        {
+            aisles_locs.push_back(loc);
         }
     };
 
     ~TaskAssignSystem() {};
 
+    int assign_inbound_station();
+    int assign_outbound_station();
+    int assign_aisle_station();
+
 private:
     deque<Task> task_queue;
-    std::vector<int> prev_task_locs;
+    std::vector<vector<int>> prev_task_locs;
+
+    std::vector<int> inbound_locs;
+    std::vector<int> outbound_locs;
+    std::vector<int> aisles_locs;
 
     void update_tasks();
 };
