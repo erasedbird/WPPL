@@ -1160,6 +1160,8 @@ vector<Action> BaseSystem::plan()
 bool BaseSystem::planner_initialize()
 {
     planner->initialize(preprocess_time_limit);
+    srand(0); // come back here and redo seed
+    for(int i = 0; i < 157; i++) rand();
     return true;
 
     // using namespace std::placeholders;

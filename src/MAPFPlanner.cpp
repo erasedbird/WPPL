@@ -674,7 +674,7 @@ RHCR::MAPFSolver* MAPFPlanner::rhcr_build_mapf_solver(nlohmann::json & config, R
 
             prioritize_start = false;
 
-        pbs->prioritize_start = prioritize_start;
+        pbs->prioritize_start = true; //prioritize_start; come back here
 
         auto CAT = read_param_json<bool>(config,"CAT");
 

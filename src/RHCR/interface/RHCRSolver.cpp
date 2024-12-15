@@ -189,7 +189,7 @@ void RHCRSolver::get_step_actions(const SharedEnvironment & env, vector<Action> 
             // arrive goal locations
             // cout << paths[i][timestep].location << " " << goal_locations[i][0].first << "\n";
             // cout << "goal changed, need replan" << "\n";
-            need_replan=true;
+            // need_replan=true;
             break;
         }
     }

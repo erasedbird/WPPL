@@ -793,6 +793,7 @@ bool PBS::run(const vector<State>& starts,
         int start_loc = starts[i].location;
         for (const auto& goal : goal_locations[i])
         {
+            if(i%10 == 0) cout << i <<": goal is " << goal.first << " and heuristic is " << G.heuristics.at(goal.first)[start_loc] << "\n";
             min_sum_of_costs += G.heuristics.at(goal.first)[start_loc];
             start_loc = goal.first;
         }

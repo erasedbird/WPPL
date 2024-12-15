@@ -104,7 +104,7 @@ void CompetitionGraph::preprocessing(bool consider_rotation, const string & file
             if (types[idx]!="Obstacle"){
 			    ++total;
                 idxs.push_back(idx);
-                heuristics[idx]=vector<double>(this->size(),DBL_MAX);
+                heuristics[idx]=compute_heuristics(idx);//vector<double>(this->size(),DBL_MAX);
             }
 		}        
         // int step=100;
@@ -124,7 +124,10 @@ void CompetitionGraph::preprocessing(bool consider_rotation, const string & file
 
 		// }
 
-        int n_threads=1;//omp_get_max_threads();               
+
+        /*
+
+         int n_threads=1;//omp_get_max_threads();               
         cout<<"number of threads used for heuristic computation: "<<n_threads<<endl;
         int n_directions=4;
         // maybe let's just use c way to speed up?
@@ -160,6 +163,8 @@ void CompetitionGraph::preprocessing(bool consider_rotation, const string & file
         delete [] visited;
         delete [] queues;
 
+        */
+
         std::cout << "saving heuristics table\n";
         
 		save_heuristics_table(fname);
@@ -188,6 +193,7 @@ inline bool empty(int s_idx, int e_idx) {
 }
 
 // TODO: use r-value?
+/*
 void CompetitionGraph::compute_heuristics(
     int root_location,
     double * lengths,
@@ -237,6 +243,9 @@ void CompetitionGraph::compute_heuristics(
         }
     }
 }
+
+*/
+
 
 bool CompetitionGraph::load_heuristics_table(std::ifstream& myfile)
 {

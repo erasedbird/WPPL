@@ -403,8 +403,11 @@ std::string run(const py::kwargs& kwargs)
             outbounds = read_int_vec(outbound_path);
             aisles = read_int_vec(aisles_path);
 
+            int rand_count = 0;
+
             for (int k = 0; k < agents.size();)
             {
+                rand_count ++;
                 int idx = rand() % spawns.size();
                 int loc = spawns[idx];
                 // if (G.types[loc] = "Home" && !used[loc])
@@ -434,7 +437,13 @@ std::string run(const py::kwargs& kwargs)
                 {
                     loading_track.push_back(1);
                 }
+                rand_count ++;
+                rand_count ++;
             }
+
+            cout << "rand count !!!!!!! " << rand_count << "\n";
+
+            // cout << "rand test 1 " << rand() << "\n";
 
         } else {
             int num_agents=kwargs["num_agents"].cast<int>();
