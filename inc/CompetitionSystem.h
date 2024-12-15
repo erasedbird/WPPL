@@ -325,6 +325,9 @@ public:
     //void saveSimulationIssues(const string &fileName) const;
     void saveResults(const string &fileName) const;
 
+    int rand_checker;
+    int rand_seed;
+
 #ifdef MAP_OPT
     nlohmann::json analyzeResults();
 #endif

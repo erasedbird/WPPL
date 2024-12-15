@@ -97,13 +97,13 @@ for agents_num in agents_paths:
         map_path="Benchmark-Archive/2023 Competition/Example Instances/warehouse.domain/maps/symbotic_medium.map",
         # map_json_str = map_json_str,
         # map_json_path = map_json_path,
-        simulation_steps=800,
+        simulation_steps=802,
         # for the problem instance we use:
         # if random then we need specify the number of agents and total tasks, also random seed,
         gen_random=False,
         num_agents=agents_num,
         num_tasks=20000,
-        seed=0,
+        seed=2,
         save_paths=True,
         # weight of the left/right workstation, only applicable for maps with workstations
         left_w_weight=1,

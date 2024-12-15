@@ -1,13 +1,13 @@
 {
     "lifelong_solver_name": "RHCR",
     "map_weights_path": "",
-    "max_execution_steps": 800,
+    "max_execution_steps": 1000,
     "max_task_completed": 1000000,
     "max_agents_in_use": -1,
     "disable_corner_target_agents": false,
-    "seed": 0,
+    "seed": 2,
     "RHCR": {
-        "seed": 0,
+        "seed": 2,
         "planning_window": 5,
         "execution_window": 5,
         "use_external_executor": false,

@@ -357,6 +357,10 @@ std::string run(const py::kwargs& kwargs)
     ActionModelWithRotate *model = new ActionModelWithRotate(grid);
     model->set_logger(logger);
 
+    int rand_checker = 0;
+    int seed = 0;
+    int rand_count = 0;
+
     if (grid.agent_home_locations.size()==0 || grid.end_points.size()==0) {
         std::vector<int> agents;
         std::vector<int> tasks;
@@ -374,9 +378,13 @@ std::string run(const py::kwargs& kwargs)
             }
             auto agents_path = kwargs["agents_path"].cast<std::string>(); //useless
             auto tasks_path = kwargs["tasks_path"].cast<std::string>();
-            int seed = kwargs["seed"].cast<int>();
+            seed = kwargs["seed"].cast<int>();
             agents = read_int_vec(agents_path); //useless
             tasks = read_int_vec(tasks_path);
+
+            cout << "got here ig " << "\n";
+
+            // planner -> initialize(preprocess_time_limit);
 
             cout << "SEED " << seed << "\n";
 
@@ -403,8 +411,6 @@ std::string run(const py::kwargs& kwargs)
             outbounds = read_int_vec(outbound_path);
             aisles = read_int_vec(aisles_path);
 
-            int rand_count = 0;
-
             for (int k = 0; k < agents.size();)
             {
                 rand_count ++;
@@ -424,12 +430,15 @@ std::string run(const py::kwargs& kwargs)
                 }
             }
 
+            
+
             for (int k = 0; k < agents.size(); k++)
             {
                 int goal;
                 goal = aisles[rand()%aisles.size()];
                 tasks[k] = goal;
-                if (rand() % 2 == 0)
+                rand_checker = rand();
+                if (rand_checker % 2 == 0)
                 {
                     loading_track.push_back(0); // loading after the goal is arrived, 0 is without loading, 1 is with loading
                 }
@@ -441,7 +450,7 @@ std::string run(const py::kwargs& kwargs)
                 rand_count ++;
             }
 
-            cout << "rand count !!!!!!! " << rand_count << "\n";
+            cout << "rand count !!!!!!! " << rand_count << " " << rand_checker << "\n";
 
             // cout << "rand test 1 " << rand() << "\n";
 
@@ -460,6 +469,8 @@ std::string run(const py::kwargs& kwargs)
         if (task_assignment_strategy == "greedy")
         {
             system_ptr = std::make_unique<TaskAssignSystem>(grid, planner, agents, tasks, inbounds, outbounds, aisles, loading_track, model);
+            system_ptr -> rand_checker = rand_count;
+            system_ptr -> rand_seed = seed;
         }
         else if (task_assignment_strategy == "roundrobin")
         {

@@ -1159,9 +1159,10 @@ vector<Action> BaseSystem::plan()
 
 bool BaseSystem::planner_initialize()
 {
+    // cout << "got here fine!!!!!!!! \m";
     planner->initialize(preprocess_time_limit);
-    srand(0); // come back here and redo seed
-    for(int i = 0; i < 157; i++) rand();
+    srand(rand_seed); // come back here and redo seed
+    for(int i = 0; i < rand_checker; i++) rand();
     return true;
 
     // using namespace std::placeholders;
@@ -1292,7 +1293,7 @@ void BaseSystem::simulate(int simulation_time)
 
         ONLYDEV(analyzer.data["finished_tasks"]=num_of_tasks;)
 
-        if (timestep > 110 && timestep < 170){
+        if (timestep > 495 && timestep < 505){
             for (int iii = 0; iii < 50; iii++){
                 cout << "Agent " << iii << ": ";
                 cout << "at " << curr_states[iii].location << "; goals are ";
@@ -1982,7 +1983,7 @@ void TaskAssignSystem::update_tasks()
         
         int loc = curr_states[k].location;
         int loading = prev_task_locs[k].back();
-        int min_timesteps = abs(std::floor(goal / cols) - std::floor(loc / cols)) + abs(goal % cols - loc % cols);
+        int min_timesteps = abs((goal / cols) - (loc / cols)) + abs(goal % cols - loc % cols);
 
         // cout << "goal is " << goal << " state is " << loc << "\n";
 
@@ -2042,8 +2043,9 @@ void TaskAssignSystem::update_tasks()
             all_tasks.push_back(new_task);
             log_event_assigned(k, new_task.task_id, timestep);
 
+            min_timesteps += abs((goal / cols) - (next / cols)) + abs(goal % cols - next % cols);
+
             goal = next;
-            min_timesteps += abs(std::floor(goal / cols) - std::floor(loc / cols)) + abs(goal % cols - loc % cols);
 
             cout << next << " was assigned to " << k << "\n";
         }
