@@ -378,7 +378,9 @@ std::string run(const py::kwargs& kwargs)
             agents = read_int_vec(agents_path); //useless
             tasks = read_int_vec(tasks_path);
 
-            std::srand(0);
+            cout << "SEED " << seed << "\n";
+
+            std::srand(seed);
             // cout << rand() << "\n";
 
             auto spawn_path = kwargs["spawn_locs"].cast<std::string>();

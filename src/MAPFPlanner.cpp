@@ -173,6 +173,8 @@ void MAPFPlanner::rhcr_config_solver(std::shared_ptr<RHCR::RHCRSolver> & solver,
     } else {
         solver->seed = (int)time(0);
     }
+
+
     srand(solver->seed);
 }
 
@@ -779,6 +781,7 @@ void MAPFPlanner::rhcr_config_solver(std::shared_ptr<RHCR::RHCRSolver> & solver,
         solver->seed = (int)time(0);
 
     }
+
 
     // srand(solver->seed); // come back here
 

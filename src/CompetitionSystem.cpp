@@ -233,6 +233,7 @@ void BaseSystem::simulate(int simulation_time)
 
         // move drives
         list<Task> new_finished_tasks = move(actions);
+
         if (!planner_movements[0].empty() && planner_movements[0].back() == Action::NA)
         {
             planner_times.back()+=plan_time_limit;  //add planning time to last record
@@ -1289,7 +1290,20 @@ void BaseSystem::simulate(int simulation_time)
 
         ONLYDEV(analyzer.data["finished_tasks"]=num_of_tasks;)
 
-        if (timestep%5==0) update_tasks();
+        if (timestep > 110 && timestep < 170){
+            for (int iii = 0; iii < 50; iii++){
+                cout << "Agent " << iii << ": ";
+                cout << "at " << curr_states[iii].location << "; goals are ";
+                for (int iiii = 0; iiii < assigned_tasks[iii].size(); iiii++){
+                    cout << assigned_tasks[iii][iiii].location << ", ";
+                }
+                cout << "\n";
+            }
+            // cout << curr_states[23].location << " is loc of 23" << "\n"; 
+        }
+       // cout << curr_states[23].location << " is loc of 23" << "\n"; 
+
+        if ((timestep)%5==0) update_tasks();
 
         bool complete_all = false;
         for (auto & t: assigned_tasks)
@@ -1942,7 +1956,7 @@ void TaskAssignSystem::update_tasks()
             log_event_assigned(k, task.task_id, timestep);
         }*/
 
-        if (assigned_tasks[k].size()==0){
+        if (assigned_tasks[k].size()==0 && timestep == 0){
             std::cout << "initialized task " << task_queue.front().task_id <<
                 " with loc " << task_queue.front().location << " to agent " << k << std::endl;
             Task task = task_queue.front();
@@ -1956,10 +1970,17 @@ void TaskAssignSystem::update_tasks()
         } 
         
         int cols = env -> cols;
-        int goal = assigned_tasks[k].back().location;
+        int goal;
+
+        if (assigned_tasks[k].size() > 0){
+            goal = assigned_tasks[k].back().location;
+        } else {
+            goal = curr_states[k].location;
+        }
+        
         int loc = curr_states[k].location;
         int loading = prev_task_locs[k].back();
-        int min_timesteps = abs(goal / cols - loc / cols) + abs(goal % cols - loc % cols);
+        int min_timesteps = abs(std::floor(goal / cols) - std::floor(loc / cols)) + abs(goal % cols - loc % cols);
 
         // cout << "goal is " << goal << " state is " << loc << "\n";
 
@@ -2020,7 +2041,7 @@ void TaskAssignSystem::update_tasks()
             log_event_assigned(k, new_task.task_id, timestep);
 
             goal = next;
-            min_timesteps += abs(goal / cols - loc / cols) + abs(goal % cols - loc % cols);
+            min_timesteps += abs(std::floor(goal / cols) - std::floor(loc / cols)) + abs(goal % cols - loc % cols);
 
             cout << next << " was assigned to " << k << "\n";
         }
