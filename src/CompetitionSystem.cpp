@@ -1307,6 +1307,7 @@ void BaseSystem::simulate(int simulation_time)
        // cout << curr_states[23].location << " is loc of 23" << "\n"; 
 
         if ((timestep)%5==0) update_tasks();
+        // update_tasks();
 
         bool complete_all = false;
         for (auto & t: assigned_tasks)

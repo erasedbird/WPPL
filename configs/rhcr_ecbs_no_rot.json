@@ -1,7 +1,7 @@
 {
     "lifelong_solver_name": "RHCR",
     "map_weights_path": "",
-    "max_execution_steps": 500,
+    "max_execution_steps": 800,
     "max_task_completed": 1000000,
     "max_agents_in_use": -1,
     "disable_corner_target_agents": false,
@@ -36,10 +36,10 @@
         "output": "output_debug",
         "screen": 1,
         "log": true,
-        "cutoffTime": 60,
+        "cutoffTime": 2,
         "simulation_window": 5,
         "robust": 0,
-        "suboptimal_bound": 1.2,
+        "suboptimal_bound": 1,
         "potential_function": "NONE",
         "potential_threshold": 0
     },

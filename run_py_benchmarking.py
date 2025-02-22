@@ -83,14 +83,14 @@ import py_driver # type: ignore # ignore pylance warning
 print(py_driver.playground())
 
 import json
-config_path="configs/rhcr_pbs_no_rot.json"
+config_path="configs/rhcr_ecbs_no_rot.json"
 with open(config_path) as f:
     config=json.load(f)
     config_str=json.dumps(config)
 
 agents_paths = [50]
 
-for agents_num in agents_paths:
+for seed in range(16):
     ret=py_driver.run(
         # For map, it uses map_path by default. If not provided, it'll use map_json
         # which contains json string of the map
@@ -101,9 +101,9 @@ for agents_num in agents_paths:
         # for the problem instance we use:
         # if random then we need specify the number of agents and total tasks, also random seed,
         gen_random=False,
-        num_agents=agents_num,
+        num_agents=50,
         num_tasks=20000,
-        seed=0,
+        seed=seed,
         save_paths=True,
         # weight of the left/right workstation, only applicable for maps with workstations
         left_w_weight=1,
