@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 #include "SharedEnv.h"
-#include <omp.h>
+#include "/opt/homebrew/opt/libomp/include/omp.h"
 #include <chrono>
 #include "util/CompetitionActionModel.h"
 #include "boost/filesystem.hpp"

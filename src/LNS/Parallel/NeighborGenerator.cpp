@@ -3,7 +3,7 @@
 #include "util/Dev.h"
 #include "util/MyLogger.h"
 #include <algorithm>
-#include "omp.h"
+#include "/opt/homebrew/opt/libomp/include/omp.h"
 
 namespace LNS {
 

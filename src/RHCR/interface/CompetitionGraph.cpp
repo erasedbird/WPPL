@@ -1,6 +1,6 @@
 #include "RHCR/interface/CompetitionGraph.h"
 #include "common.h"
-#include <omp.h>
+#include "/opt/homebrew/opt/libomp/include/omp.h"
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/gzip.hpp>

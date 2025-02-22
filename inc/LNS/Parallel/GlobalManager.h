@@ -5,7 +5,7 @@
 #include "util/TimeLimiter.h"
 #include <memory>
 #include "LaCAM2/instance.hpp"
-#include <omp.h>
+#include "/opt/homebrew/opt/libomp/include/omp.h"
 
 namespace LNS {
 

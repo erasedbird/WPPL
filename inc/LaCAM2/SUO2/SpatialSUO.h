@@ -1,6 +1,6 @@
 #pragma once
 #include "SharedEnv.h"
-#include <omp.h>
+#include "/opt/homebrew/opt/libomp/include/omp.h"
 #include "LaCAM2/SUO2/CostMap.h"
 #include "LaCAM2/SUO2/SpatialSearch.h"
 #include "util/HeuristicTable.h"

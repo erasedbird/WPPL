@@ -1818,18 +1818,18 @@ void TaskAssignSystem::update_tasks()
                 }
             }
 
-            std::cout << "previous loc is " << prev_task_locs[k] << "\n";
+            // std::cout << "previous loc is " << prev_task_locs[k] << "\n";
 
-            std::cout << "closest task is " << closest_index << "\n";
+            // std::cout << "closest task is " << closest_index << "\n";
 
-            std::cout << "Taskqueue length is " << task_queue.size() << "\n";
+            // std::cout << "Taskqueue length is " << task_queue.size() << "\n";
 
-            // closest_index = 0;
+            closest_index = 0;
 
             Task task_start = task_queue[closest_index];
-            std::cout << "assigned task start " << task_start.task_id << " with loc " << task_start.location << " to agent " << k << std::endl;
+            // std::cout << "assigned task start " << task_start.task_id << " with loc " << task_start.location << " to agent " << k << std::endl;
             Task task_end = task_queue[closest_index + 1];
-            std::cout << "assigned task end " << task_end.task_id << " with loc " << task_end.location << " to agent " << k << std::endl;
+            // std::cout << "assigned task end " << task_end.task_id << " with loc " << task_end.location << " to agent " << k << std::endl;
             // task_queue.pop_front();
             // task_queue.pop_front();
 
