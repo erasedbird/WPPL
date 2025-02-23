@@ -1212,6 +1212,8 @@ void BaseSystem::simulate(int simulation_time)
 {
     //init logger
     //Logger* log = new Logger();
+    auto nothing = std::chrono::steady_clock::now();
+    auto planning_time_taken = nothing-nothing;
 
     ONLYDEV(g_timer.record_p("simulate_start");)
 
@@ -1256,6 +1258,8 @@ void BaseSystem::simulate(int simulation_time)
         )
 
         auto end = std::chrono::steady_clock::now();
+
+        planning_time_taken += (end - start);;
 
         timestep += 1;
         ONLYDEV(analyzer.data["timesteps"]=timestep;)
@@ -1336,6 +1340,9 @@ void BaseSystem::simulate(int simulation_time)
 
     cout << std::endl << "Done!" << std::endl;
     cout << num_of_tasks << " tasks has been finished by far in total" << std::endl;
+    std::cout << "Total planning time: " 
+              << std::chrono::duration_cast<std::chrono::milliseconds>(planning_time_taken).count()
+              << " ms" << std::endl;
 
     ONLYDEV(analyzer.dump();)
 }
