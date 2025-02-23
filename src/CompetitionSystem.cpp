@@ -1159,7 +1159,7 @@ vector<Action> BaseSystem::plan()
 
 bool BaseSystem::planner_initialize()
 {
-    // cout << "got here fine!!!!!!!! \m";
+    cout << "got here fine!!!!!!!! \m";
     planner->initialize(preprocess_time_limit);
     srand(rand_seed); // come back here and redo seed
     for(int i = 0; i < rand_checker; i++) rand();
@@ -1293,7 +1293,7 @@ void BaseSystem::simulate(int simulation_time)
 
         ONLYDEV(analyzer.data["finished_tasks"]=num_of_tasks;)
 
-        if (timestep > 495 && timestep < 505){
+        /* if (timestep > 495 && timestep < 505){
             for (int iii = 0; iii < 50; iii++){
                 cout << "Agent " << iii << ": ";
                 cout << "at " << curr_states[iii].location << "; goals are ";
@@ -1303,7 +1303,7 @@ void BaseSystem::simulate(int simulation_time)
                 cout << "\n";
             }
             // cout << curr_states[23].location << " is loc of 23" << "\n"; 
-        }
+        }*/
        // cout << curr_states[23].location << " is loc of 23" << "\n"; 
 
         if ((timestep)%5==0) update_tasks();
@@ -2072,39 +2072,62 @@ void InfAssignSystem::update_tasks(){
     }
 }
 
+
+// TODO KIVA: redo this in style of task assign sysem
 void KivaSystem::update_tasks(){
+    cout << "I'm in the right one \n";
+
     for (int k = 0; k < num_of_agents; k++)
     {
-        while (assigned_tasks[k].size() < num_tasks_reveal) 
-        {
-            int prev_task_loc=prev_task_locs[k];
+        if (assigned_tasks[k].size()==0 && timestep == 0){
+            int goal = endpoint_locs[rand() % (int)endpoint_locs.size()];
 
-            int loc;
-            if (map.grid_types[prev_task_loc]=='.' || map.grid_types[prev_task_loc]=='e') 
-            {
-                // next task would be w
-                // Sample a workstation based on given distribution
-                int idx = this->agent_home_loc_dist(this->MT);
-                // int idx=MT()%map.agent_home_locations.size();
-                loc=map.agent_home_locations[idx];
-            } else if (map.grid_types[prev_task_loc]=='w')
-            {
-                // next task would e
-                int idx=MT()%map.end_points.size();
-                loc=map.end_points[idx];
-            } else {
-                std::cout<<"unkonw grid type"<<std::endl;
-                exit(-1);
-            }
-            
-            Task task(task_id,loc,timestep,k);
-            assigned_tasks[k].push_back(task);
-            events[k].push_back(make_tuple(task.task_id,timestep,"assigned"));
-            log_event_assigned(k, task.task_id, timestep);
-            all_tasks.push_back(task);
-            prev_task_locs[k]=loc;
-            task_id++;
+            std::cout << "initialized task with loc " << goal << " to agent " << k << std::endl;
+            Task new_task = Task(task_id++, goal);
+
+            new_task.t_assigned = timestep;
+            new_task.agent_assigned = k;
+            assigned_tasks[k].push_back(new_task);
+
+            events[k].push_back(make_tuple(new_task.task_id, timestep, "assigned"));
+            all_tasks.push_back(new_task);
+            log_event_assigned(k, new_task.task_id, timestep);
+        } 
+    }
+
+    for (int k = 0; k < num_of_agents; k++)
+    {
+
+        int cols = env -> cols;
+        int goal;
+
+        if (assigned_tasks[k].size() > 0){
+            goal = assigned_tasks[k].back().location;
+        } else {
+            goal = curr_states[k].location;
         }
+        
+        int loc = curr_states[k].location;
+        int min_timesteps = abs((goal / cols) - (loc / cols)) + abs(goal % cols - loc % cols);
+
+        while (min_timesteps <= 5){
+            int next = endpoint_locs[rand() % (int)endpoint_locs.size()];
+
+            std::cout << "Assigned task with loc " << next << " to agent " << k << std::endl;
+            Task new_task = Task(task_id++, next);
+
+            new_task.t_assigned = timestep;
+            new_task.agent_assigned = k;
+            assigned_tasks[k].push_back(new_task);
+
+            events[k].push_back(make_tuple(new_task.task_id, timestep, "assigned"));
+            all_tasks.push_back(new_task);
+            log_event_assigned(k, new_task.task_id, timestep);
+
+            min_timesteps += abs((goal / cols) - (next / cols)) + abs(goal % cols - next % cols);
+            goal = next;
+        }
+
     }
 }
 

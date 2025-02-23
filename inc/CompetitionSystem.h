@@ -601,12 +601,40 @@ public:
 
     };
 
+    KivaSystem(Grid &grid, MAPFPlanner* planner, std::vector<int> &start_locs, std::vector<int> &endpoints, ActionModelWithRotate* model, uint seed):
+        BaseSystem(grid, planner, model), MT(seed), task_id(0)
+    {
+        num_of_agents = start_locs.size();
+        starts.resize(num_of_agents);
+
+        //std::shuffle(grid.empty_locations.begin(),grid.empty_locations.end(), MT);
+        // shuffle(agent_home_locations.begin(), agent_home_locations.end(), std::default_random_engine());
+
+
+        task_id = 0;
+        // TODOKIVA: checks starting locs
+        for (size_t i = 0; i < start_locs.size(); i++)
+        {
+            starts[i] = State(start_locs[i], 0, -1);
+            cout << i << ": " << starts[i] << "\n";
+        }
+
+        for (auto &loc : endpoints)
+        {
+            endpoint_locs.push_back(loc);
+        }
+
+    };
+
 private:
     std::mt19937 MT;
     int task_id=0;
 
     void update_tasks();
     std::discrete_distribution<int> agent_home_loc_dist;
+
+    std::vector<int> endpoint_locs;
+    // int task_id;
 
     std::vector<int> prev_task_locs;
 

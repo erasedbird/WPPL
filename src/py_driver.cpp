@@ -368,6 +368,7 @@ std::string run(const py::kwargs& kwargs)
         std::vector<int> inbounds;
         std::vector<int> outbounds;
         std::vector<int> aisles;
+        std::vector<int> rand_spawns;
 
         std::vector<int> loading_track;
 
@@ -382,17 +383,26 @@ std::string run(const py::kwargs& kwargs)
             agents = read_int_vec(agents_path); //useless
             tasks = read_int_vec(tasks_path);
 
-            cout << "got here ig " << "\n";
+            cout << "got here ig, but on 2/22 " << "\n";
 
             // planner -> initialize(preprocess_time_limit);
 
             cout << "SEED " << seed << "\n";
 
-            std::srand(seed);
             // cout << rand() << "\n";
 
             auto spawn_path = kwargs["spawn_locs"].cast<std::string>();
             std::vector<int> spawns = read_int_vec(spawn_path);
+            for(int i = 0; i < spawns.size(); i++){
+                std::cout << spawns[i] << ", ";
+            }
+            std::cout << "\n";
+
+            std::srand(seed);
+
+            std::default_random_engine engine;
+            std::cout << typeid(engine).name() << std::endl;
+
             shuffle(spawns.begin(), spawns.end(), std::default_random_engine());
 
             for(int i = 0; i < spawns.size(); i++){
@@ -406,6 +416,8 @@ std::string run(const py::kwargs& kwargs)
             auto aisles_path = kwargs["aisles_locs"].cast<std::string>();
             auto inbound_path = kwargs["inbound_locs"].cast<std::string>();
             auto outbound_path = kwargs["outbound_locs"].cast<std::string>();
+
+            rand_spawns.assign(spawns.begin(), spawns.begin()+agents.size());
 
             inbounds = read_int_vec(inbound_path);
             outbounds = read_int_vec(outbound_path);
@@ -466,10 +478,19 @@ std::string run(const py::kwargs& kwargs)
             logger->log_warning("Not enough tasks for robots (number of tasks < team size)");
 
         // std::string task_assignment_strategy = data["taskAssignmentStrategy"].get<std::string>();
+
+        cout << "TASK ASSIGNMENT STRAT " << task_assignment_strategy << "\n";
         if (task_assignment_strategy == "greedy")
         {
             system_ptr = std::make_unique<TaskAssignSystem>(grid, planner, agents, tasks, inbounds, outbounds, aisles, loading_track, model);
             system_ptr -> rand_checker = rand_count;
+            system_ptr -> rand_seed = seed;
+        } else if (task_assignment_strategy == "kiva")
+        {
+            cout << "in kiva system!!!! \n";
+            // inbounds = starts, outbounds = endpoints
+            system_ptr = std::make_unique<KivaSystem>(grid, planner, rand_spawns, outbounds, model, seed);
+            system_ptr -> rand_checker = 0;
             system_ptr -> rand_seed = seed;
         }
         else if (task_assignment_strategy == "roundrobin")
